@@ -1,8 +1,17 @@
 ﻿
+/*
+
+	Node.js File Server
+	Andy Green
+	http://andygrn.co.uk
+	November 2011
+
+*/
+
 var CONFIG = {
 	
 		host : '127.0.0.1',
-		port : 8002,
+		port : 80,
 		
 		site_base : './site',
 		
