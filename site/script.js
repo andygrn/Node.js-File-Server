@@ -1,0 +1,6 @@
+﻿
+function modalLol() {
+
+	alert('lol!');
+
+}

@@ -1,0 +1,5 @@
+﻿@charset 'utf-8';
+
+body{background-color:#fff; color:#333; font-family:sans-serif; text-align:center;}
+
+body.page-404 h1{color:#F00;}
