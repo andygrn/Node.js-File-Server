@@ -68,12 +68,12 @@ function handleFileRequest(request, response, file_path) {
 	
 		if (file_exists) {
 		
-			serveFile(request, response, file_path);
+			serveFile(request, response, 200, file_path);
 		
 		}
 		else {
 		
-			serveFile(request, response, CONFIG.site_base + CONFIG.file_404, true);
+			serveFile(request, response, 404, CONFIG.site_base + CONFIG.file_404);
 		
 		}
 	
@@ -82,7 +82,7 @@ function handleFileRequest(request, response, file_path) {
 }
 
 
-function serveFile(request, response, file_path, is404) {
+function serveFile(request, response, status, file_path) {
 
 	var file_extension = PATH.extname(file_path),
 		mime_type = MIME_TYPES[file_extension];
@@ -115,17 +115,8 @@ function serveFile(request, response, file_path, is404) {
 					'ETag' : etag
 				
 				};
-				
-				if (is404) {
-				
-					response.writeHead(404, headers);
-				
-				}
-				else {
-				
-					response.writeHead(200, headers);
-				
-				}
+
+				response.writeHead(status, headers);
 				
 				FS.createReadStream(file_path).pipe(response);
 			
