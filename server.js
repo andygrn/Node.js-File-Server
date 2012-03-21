@@ -11,42 +11,42 @@
 'use strict';
 
 var CONFIG = {
+
+	'host': '127.0.0.1',
+	'port': 80,
 	
-		'host': '127.0.0.1',
-		'port': 80,
-		
-		'site_base': './site',
-		
-		'file_expiry_time': 300, // minutes
-		
-		'directory_listing': true
+	'site_base': './site',
 	
-	},
+	'file_expiry_time': 480, // HTTP cache expiry time, minutes
 	
-	MIME_TYPES = {
+	'directory_listing': true
+
+};
 	
-		'.txt': 'text/plain',
-		'.md': 'text/plain',
-		'': 'text/plain',
-		'.html': 'text/html',
-		'.css': 'text/css',
-		'.js': 'application/javascript',
-		'.json': 'application/json',
-		'.jpg': 'image/jpeg',
-		'.png': 'image/png',
-		'.gif': 'image/gif'
+var MIME_TYPES = {
+
+	'.txt': 'text/plain',
+	'.md': 'text/plain',
+	'': 'text/plain',
+	'.html': 'text/html',
+	'.css': 'text/css',
+	'.js': 'application/javascript',
+	'.json': 'application/json',
+	'.jpg': 'image/jpeg',
+	'.png': 'image/png',
+	'.gif': 'image/gif'
+
+};
 	
-	},
+var EXPIRY_TIME = (CONFIG.file_expiry_time * 60).toString();
 	
-	EXPIRY_TIME = (CONFIG.file_expiry_time * 60).toString(),
+var HTTP = require('http');
+var PATH = require('path');
+var FS = require('fs');
+var CRYPTO = require('crypto');
+var CUSTARD = require('./custard');
 	
-	HTTP = require('http'),
-	PATH = require('path'),
-	FS = require('fs'),
-	CRYPTO = require('crypto'),
-	CUSTARD = require('./custard'),
-	
-	template_directory = FS.readFileSync('./templates/blocks/listing.js');
+var template_directory = FS.readFileSync('./templates/blocks/listing.js');
 
 
 // An object representing a server response
@@ -89,7 +89,7 @@ function handleRequest( url, callback ){
 function getFileResponse( path, callback ){
 
 	var path = CONFIG.site_base + path;
-	
+
 	PATH.exists( path, function ( path_exists ){
 		if ( path_exists ){
 			FS.readFile( path, function ( error, data ){
@@ -118,49 +118,60 @@ function getDirectoryResponse( path, callback ){
 	var full_path = CONFIG.site_base + path;
 	var template;
 	var i;
-	
-	PATH.exists( full_path, function ( path_exists ){
-		if ( path_exists ){
-			FS.readdir( full_path, function ( error, files ){
-				if ( error ){
-//					Internal error
-					callback( new ResponseObject( {'data': error.stack, 'status': 500} ) );
-				}
-				else {
-//					Custard template
-					template = new CUSTARD;
-					
-					template.addTagSet( 'h', require('./templates/tags/html') );
-					template.addTagSet( 'c', {
-						'title': 'Index of ' + path,
-						'file_list': function ( h ){
-							var items = [];
-							for ( i = 0; i < files.length; i += 1 ){
-								items.push( h.el( 'li', [
-									h.el( 'a', {'href': (path + files[i])}, files[i] )
-								] ) );
+
+	if ( CONFIG.directory_listing ){
+		PATH.exists( full_path, function ( path_exists ){
+			if ( path_exists ){
+				FS.readdir( full_path, function ( error, files ){
+					if ( error ){
+//						Internal error
+						callback( new ResponseObject( {'data': error.stack, 'status': 500} ) );
+					}
+					else {
+//						Custard template
+						template = new CUSTARD;
+						
+						template.addTagSet( 'h', require('./templates/tags/html') );
+						template.addTagSet( 'c', {
+							'title': 'Index of ' + path,
+							'file_list': function ( h ){
+								var items = [];
+								var stats;
+								for ( i = 0; i < files.length; i += 1 ){
+									stats = FS.statSync( full_path + files[i] );
+									if ( stats.isDirectory() ){
+										files[i] += '/';
+									}
+									items.push( h.el( 'li', [
+										h.el( 'a', {'href': path + files[i]}, files[i] )
+									] ) );
+								}
+								return items;
 							}
-							return items;
-						}
-					} );
-					
-					template.render( template_directory, function ( error, html ){
-						if ( error ){
-//							Internal error
-							callback( new ResponseObject( {'data': error.stack, 'status': 500} ) );
-						}
-						else {
-							callback( new ResponseObject( {'data': new Buffer( html ), 'type': 'text/html'} ) );
-						}
-					} );
-				}
-			} );
-		}
-		else {
-//			Not found
-			callback( new ResponseObject( {'status': 404} ) );
-		}
-	} );
+						} );
+						
+						template.render( template_directory, function ( error, html ){
+							if ( error ){
+//								Internal error
+								callback( new ResponseObject( {'data': error.stack, 'status': 500} ) );
+							}
+							else {
+								callback( new ResponseObject( {'data': new Buffer( html ), 'type': 'text/html'} ) );
+							}
+						} );
+					}
+				} );
+			}
+			else {
+//				Not found
+				callback( new ResponseObject( {'status': 404} ) );
+			}
+		} );
+	}
+	else {
+//		Forbidden
+		callback( new ResponseObject( {'status': 403} ) );
+	}
 
 }
 
