@@ -120,7 +120,7 @@ function getDirectoryResponse( path, callback ){
 	var i;
 
 	if ( CONFIG.directory_listing ){
-		PATH.exists( full_path, function ( path_exists ){
+		FS.exists( full_path, function ( path_exists ){
 			if ( path_exists ){
 				FS.readdir( full_path, function ( error, files ){
 					if ( error ){
