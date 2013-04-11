@@ -44,9 +44,9 @@ var HTTP = require('http');
 var PATH = require('path');
 var FS = require('fs');
 var CRYPTO = require('crypto');
-var CUSTARD = require('./custard');
+var CUSTARD = require('./custard/custard');
 	
-var template_directory = FS.readFileSync('./templates/blocks/listing.js');
+var template_directory = FS.readFileSync('./template-listing.js');
 
 
 // An object representing a server response
@@ -131,7 +131,7 @@ function getDirectoryResponse( path, callback ){
 //						Custard template
 						template = new CUSTARD;
 						
-						template.addTagSet( 'h', require('./templates/tags/html') );
+						template.addTagSet( 'h', require('./custard/templates/tags/html') );
 						template.addTagSet( 'c', {
 							'title': 'Index of ' + path,
 							'file_list': function ( h ){
